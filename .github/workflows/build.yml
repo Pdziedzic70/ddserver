@@ -6,12 +6,16 @@ jobs:
     container:
       image: openwrt/sdk:ramips-mt76x8-23.05.5
     steps:
-      - name: Download and compile ddserver
+      - name: Checkout DslrDashboardServer
+        uses: actions/checkout@v4
+        with:
+          repository: hubaiz/DslrDashboardServer
+          path: ddserver-src
+      - name: Compile ddserver
         run: |
           OUT_DIR="$PWD"
+          cp -r ddserver-src /builder/package/ddserver
           cd /builder
-          mkdir -p package/ddserver
-          wget -qO- https://github.com | tar xz --strip-components=1 -C package/ddserver
           ./scripts/feeds update base
           ./scripts/feeds install libusb-1.0
           make defconfig
