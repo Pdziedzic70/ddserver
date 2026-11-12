@@ -1,0 +1,20 @@
+name: Build ddserver
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: openwrt/sdk:ramips-mt76x8-23.05.5
+    steps:
+      - name: Compile ddserver
+        run: |
+          git clone https://github.com package/ddserver
+          ./scripts/feeds update base
+          ./scripts/feeds install libusb-1.0
+          make defconfig
+          make package/ddserver/compile V=s
+      - name: Upload IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ddserver-ipk
+          path: bin/packages/mipsel_24kc/base/ddserver_*.ipk
