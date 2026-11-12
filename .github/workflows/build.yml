@@ -8,14 +8,19 @@ jobs:
     steps:
       - name: Download and compile ddserver
         run: |
+          OUT_DIR="$PWD"
+          cd /builder
           mkdir -p package/ddserver
           wget -qO- https://github.com | tar xz --strip-components=1 -C package/ddserver
           ./scripts/feeds update base
           ./scripts/feeds install libusb-1.0
           make defconfig
+          echo "CONFIG_PACKAGE_ddserver=y" >> .config
+          make defconfig
           make package/ddserver/compile V=s
+          cp bin/packages/mipsel_24kc/base/ddserver_*.ipk "$OUT_DIR/"
       - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: ddserver-ipk
-          path: bin/packages/mipsel_24kc/base/ddserver_*.ipk
+          path: ddserver_*.ipk
