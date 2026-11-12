@@ -7,13 +7,16 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses-dev zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python3 zstd
+          sudo apt-get install -y build-essential libncurses-dev zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python3 zstd curl
 
       - name: Download SDK and build ddserver
         run: |
-          wget -q https://openwrt.org
-          tar -xf openwrt-sdk-23.05.5-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-          cd openwrt-sdk-23.05.5-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64
+          BASE_URL="https://openwrt.org"
+          SDK_FILE=$(curl -s "$BASE_URL" | grep -oE 'openwrt-sdk-[^"]+\.tar\.(xz|zst)' | head -n 1)
+          echo "Downloading: $SDK_FILE"
+          wget -q "${BASE_URL}${SDK_FILE}"
+          tar -xf "$SDK_FILE"
+          cd openwrt-sdk-*
           
           git clone https://github.com package/ddserver
           sed -i '1i #include <cstring>\n#include <unistd.h>' package/ddserver/src/*.cpp package/ddserver/src/*.h 2>/dev/null || true
