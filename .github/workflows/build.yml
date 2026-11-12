@@ -6,9 +6,10 @@ jobs:
     container:
       image: openwrt/sdk:ramips-mt76x8-23.05.5
     steps:
-      - name: Compile ddserver
+      - name: Download and compile ddserver
         run: |
-          git clone https://github.com package/ddserver
+          mkdir -p package/ddserver
+          wget -qO- https://github.com | tar xz --strip-components=1 -C package/ddserver
           ./scripts/feeds update base
           ./scripts/feeds install libusb-1.0
           make defconfig
