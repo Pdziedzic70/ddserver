@@ -6,25 +6,36 @@ jobs:
     container:
       image: openwrt/sdk:ramips-mt76x8-23.05.5
     steps:
-      - name: Checkout DslrDashboardServer
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           repository: hubaiz/DslrDashboardServer
-          path: ddserver-src
-      - name: Compile ddserver
+          path: src
+
+      - name: Build ddserver IPK
         run: |
           OUT_DIR="$PWD"
-          cp -r ddserver-src /builder/package/ddserver
+          cp -r src /builder/package/ddserver
           cd /builder
+          
+          # Poprawka brakujących bibliotek C++ w starym kodzie źródłowym
+          sed -i '1i #include <cstring>\n#include <unistd.h>' package/ddserver/src/*.cpp package/ddserver/src/*.h 2>/dev/null || true
+          
           ./scripts/feeds update base
           ./scripts/feeds install libusb-1.0
           make defconfig
           echo "CONFIG_PACKAGE_ddserver=y" >> .config
           make defconfig
-          make package/ddserver/compile V=s
-          cp bin/packages/mipsel_24kc/base/ddserver_*.ipk "$OUT_DIR/"
+          
+          # Kompilacja z wyłączeniem traktowania ostrzeżeń jako błędów
+          make package/ddserver/compile V=s TARGET_CXXFLAGS+="-fpermissive -w" TARGET_CFLAGS+="-w"
+          
+          # Automatyczne odnalezienie i skopiowanie wygenerowanego pliku .ipk
+          find bin/ -name "ddserver_*.ipk" -exec cp {} "$OUT_DIR/" \;
+          ls -la "$OUT_DIR"/ddserver_*.ipk
+
       - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: ddserver-ipk
-          path: ddserver_*.ipk
+          path: ddserver_*.ipk 
